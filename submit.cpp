@@ -21,6 +21,20 @@ point camera_place = { 0.0,0.0,0.0 }; // camera place
 point item_place = { 0.0,0.0,100.0 }; // item place that we look at
 point headtop_orient = { 0.0,1.0,0.0 };
 
+GLfloat light_position[4] = { 0.0,99.0,100.0,1 };
+GLfloat ambientlight[4] = { 0.6,0.6,0.6,0.6 };
+GLfloat diffuselight[4] = { 0.6,0.6,0.6,0.6 };
+GLfloat specularlight[4] = { 0.6,0.6,0.6,0.6 };
+
+GLfloat mat_ambient[4] = { 0.0,0.0,0.0,1.0 };
+GLfloat mat_diffuse[4] = { 0.6,0.6,0.6,0.6 };
+GLfloat mat_specular[4] = { 0.6,0.6,0.6,0.6 };
+GLfloat mat_shininess[1] = { 20.0 };
+
+bool set_rotate_positive = false;
+bool set_rotate_negative = false;
+GLfloat angle = 0;
+
 // window_size used in reshape
 struct window_size
 {
@@ -38,6 +52,31 @@ void init(void) // All Setup For OpenGL Goes Here
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	return;
+}
+
+void light_source()
+{
+	// 光位置
+	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+	// 模糊光
+	glLightfv(GL_LIGHT0, GL_AMBIENT, ambientlight);
+	// 漫反射光
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuselight);
+	// 镜面光
+	glLightfv(GL_LIGHT0, GL_SPECULAR, specularlight);
+
+	// 材质模糊光
+	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+	// 材质反射光
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	// 材质镜面光
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	// 材质镜面指数
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+	
+	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHTING);
 	return;
 }
 
@@ -72,7 +111,7 @@ void generate_wall()
 	glEnd();
 	// ceiling
 	glBegin(GL_QUADS);
-		glColor3f(0.0, 10.0, 10.5);
+		glColor3f(0.0, 1.0, 1.05);
 		glVertex3f(100, 100, 200);
 		glVertex3f(100, 100, 0);
 		glVertex3f(-100, 100, 0);
@@ -110,12 +149,103 @@ void generate_wall()
 	return;
 }
 
-void generate_teaport()
+void generate_solar()
+{
+	// solar
+	glPushMatrix();
+	glTranslatef(0.0, 80.0, 100.0);
+	glColor3f(1.0, 1.0, 0.0);
+	glutSolidSphere(6, 100, 100);
+	glPopMatrix();
+
+	// first planet
+	glPushMatrix();
+	glTranslatef(0.0, 80.0, 100.0);
+	glRotatef(4*angle, 0.0, 1.0, 0.0);
+	glColor3f(0.0, 0.0, 0.0);
+	glTranslatef(-10.0, 0.0, 0.0);
+	glRotatef(90, 0.0, 1.0, 0.0);
+	GLUquadric* pobj=gluNewQuadric();
+	gluCylinder(pobj,0.2,0.2,10.0,32,5);
+	gluDeleteQuadric(pobj);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(0.0, 80.0, 100.0);
+	glRotatef(4*angle, 0.0, 1.0, 0.0);
+	glColor3f(0.0, 0.6, 0.6);
+	glTranslatef(-10.0, 0.0, 0.0);
+	glutSolidSphere(2, 100, 100);
+	glPopMatrix();
+	
+	// second planet
+	glPushMatrix();
+	glTranslatef(0.0, 80.0, 100.0);
+	glRotatef(2 * angle, 0.0, 1.0, 0.0);
+	glColor3f(0.5, 0.0, 0.0);
+	glTranslatef(25.0, 0.0, 0.0);
+	glRotatef(-90, 0.0, 1.0, 0.0);
+	pobj=gluNewQuadric();
+	gluCylinder(pobj, 0.2, 0.2, 25.0, 32, 5);
+	gluDeleteQuadric(pobj);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(0.0, 80.0, 100.0);
+	glRotatef(2*angle, 0.0, 1.0, 0.0);
+	glColor3f(0.5, 0.0, 0.0);
+	glTranslatef(25.0, 0.0, 0.0);
+	glutSolidSphere(3, 100, 100);
+	glPopMatrix();
+
+	// third planet
+	glPushMatrix();
+	glTranslatef(0.0, 80.0, 100.0);
+	glRotatef(2.5*angle, 0.0, 1.0, 0.0);
+	glColor3f(0.5, 0.5, 0.5);
+	glTranslatef(20.0, 0.0, 0.0);
+	glRotatef(-90, 0.0, 1.0, 0.0);
+	pobj = gluNewQuadric();
+	gluCylinder(pobj, 0.2, 0.2, 20.0, 32, 5);
+	gluDeleteQuadric(pobj);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(0.0, 80.0, 100.0);
+	glRotatef(2.5*angle, 0.0, 1.0, 0.0);
+	glColor3f(0.5, 0.5, 0.5);
+	glTranslatef(20.0, 0.0, 0.0);
+	glutSolidTeapot(2);
+	glPopMatrix();
+
+	// forth planet
+	glPushMatrix();
+	glTranslatef(0.0, 80.0, 100.0);
+	glRotatef(angle / 2.0, 0.0, 1.0, 0.0);
+	glColor3f(0.5, 0.0, 0.5);
+	glTranslatef(-30.0, 0.0, 0.0);
+	glRotatef(90, 0.0, 1.0, 0.0);
+	pobj = gluNewQuadric();
+	gluCylinder(pobj, 0.2, 0.2, 30.0, 32, 5);
+	gluDeleteQuadric(pobj);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(0.0, 80.0, 100.0);
+	glRotatef(angle/2.0, 0.0, 1.0, 0.0);
+	glColor3f(0.5, 0.0, 0.5);
+	glTranslatef(-30.0, 0.0, 0.0);
+	glutSolidSphere(2, 100, 100);
+	glPopMatrix();
+	return;
+}
+
+void generate_cube()
 {
 	glPushMatrix();
-	glColor3f(10.0, 10.0, 0.0);
-	glTranslatef(0.0, 0.0, 100.0);
-	glutWireTeapot(10);
+	glTranslatef(55.0, -55.0, 155.0);
+	glColor3f(0.5, 0.5, 0.5);
+	glutSolidCube(90);
 	glPopMatrix();
 	return;
 }
@@ -128,18 +258,21 @@ void display(void) // Here's Where We Do All The Drawing
 
 	// TODO:
 	// Place light source here
+	light_source();
 
 	// TODO:
 	// Draw walls and objects here
 	generate_wall();
 	generate_floor_board();
-	generate_teaport();
+	generate_solar();
+	generate_cube();
 
 	// TODO:
 	// Add animation here
 
 	glutSwapBuffers();
 	glFlush();
+	glutPostRedisplay();
 	return;
 }
 
@@ -168,6 +301,7 @@ void reshape(int w, int h) // Resize the GL Window. w=width, h=height
 
 void keyboard(unsigned char key, int x, int y) // Handle the keyboard events here
 {
+	int i;
 	// wasd move camera place
 	switch (key)
 	{
@@ -191,7 +325,58 @@ void keyboard(unsigned char key, int x, int y) // Handle the keyboard events her
 			camera_place.y = 0.0;
 			camera_place.z = 0.0;
 			break;
-
+		case '-':
+			if(ambientlight[0]>0)
+				for (i = 0; i < 4; ++i)
+				{
+					ambientlight[i] -= 0.1;
+					diffuselight[i] -= 0.1;
+					specularlight[i] -= 0.1;
+				}
+			glEnable(GL_LIGHT0);
+			glEnable(GL_LIGHTING);
+			break;
+		case '=':
+			if(ambientlight[0]<0.8)
+				for (i = 0; i < 4; ++i)
+				{
+					ambientlight[i] += 0.1;
+					diffuselight[i] += 0.1;
+					specularlight[i] += 0.1;
+				}
+			glEnable(GL_LIGHT0);
+			glEnable(GL_LIGHTING);
+			break;
+		case '1':
+			set_rotate_positive = true;
+			set_rotate_negative = false;
+			break;
+		case '2':
+			set_rotate_positive = false;
+			set_rotate_negative = true;
+			break;
+		case '3':
+			set_rotate_positive = false;
+			set_rotate_negative = false;
+			break;
+		case 'l':
+			if (ambientlight[0] > 0)
+				for (i = 0; i < 4; ++i)
+				{
+					ambientlight[i] = 0;
+					diffuselight[i] = 0;
+					specularlight[i] = 0;
+				}
+			else
+				for (i = 0; i < 4; ++i)
+				{
+					ambientlight[i] = 0.8;
+					diffuselight[i] = 0.8;
+					specularlight[i] = 0.8;
+				}
+			glEnable(GL_LIGHT0);
+			glEnable(GL_LIGHTING);
+			break;
 		// TODO:
 		// Add keyboard control here
 
@@ -203,6 +388,10 @@ void keyboard(unsigned char key, int x, int y) // Handle the keyboard events her
 
 void idle()
 {
+	if (set_rotate_positive)
+		angle-=1;
+	if (set_rotate_negative)
+		angle+=1;
 	return;
 }
 
