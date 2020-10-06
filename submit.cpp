@@ -9,6 +9,7 @@
 *****************************************************************************/
 
 #include <stdlib.h>
+#include <ctime>
 #include <GL/glut.h>
 
 struct point
@@ -17,7 +18,7 @@ struct point
 	GLdouble y;
 	GLdouble z;
 };
-point camera_place = { 0.0,0.0,0.0 }; // camera place
+point camera_place = { 0.0,0.0,-30.0 }; // camera place
 point item_place = { 0.0,0.0,100.0 }; // item place that we look at
 point headtop_orient = { 0.0,1.0,0.0 };
 
@@ -28,12 +29,98 @@ GLfloat specularlight[4] = { 0.6,0.6,0.6,0.6 };
 
 GLfloat mat_ambient[4] = { 0.0,0.0,0.0,1.0 };
 GLfloat mat_diffuse[4] = { 0.6,0.6,0.6,0.6 };
-GLfloat mat_specular[4] = { 0.6,0.6,0.6,0.6 };
-GLfloat mat_shininess[1] = { 20.0 };
+GLfloat mat_specular[4] = { 0.2,0.2,0.2,0.8 };
+GLfloat mat_shininess[1] = { 5.0 };
 
+// rotate the lamp
 bool set_rotate_positive = false;
 bool set_rotate_negative = false;
-GLfloat angle = 0;
+GLfloat lamp_angle = 0;
+
+// move the teapot
+bool move_teapot = false;
+bool inc_teapot_place = true;
+GLfloat teapot_place = 0;
+
+// generate the drawing on the wall
+bool map[30][40];
+class game_of_life
+{
+private:
+	bool map[30][40];
+	bool get_map(int x, int y)
+	{
+		if (x < 0) x = 29;
+		if (x > 29)x = 0;
+		if (y < 0)y = 39;
+		if (y > 39)y = 0;
+		return map[x][y];
+	}
+public:
+	game_of_life()
+	{
+		srand(unsigned(time(NULL)));
+		for(int i=0; i<30; ++i)
+			for(int j=0; j<40; ++j)
+				map[i][j] = (rand()%100)<30;
+		return;
+	}
+	void reset()
+	{
+		for (int i = 0; i < 30; ++i)
+			for (int j = 0; j < 40; ++j)
+				map[i][j] = (rand() % 100) < 30;
+		return;
+	}
+	void draw()
+	{
+		for(int i=0; i<30; ++i)
+			for(int j=0; j<40; ++j)
+				if (map[i][j])
+				{
+					glBegin(GL_QUADS);
+					glColor3f(0.0, 0.5, 0.4);
+					glVertex3f(-99.8, 80-j*4.0, 40+i*4.0);
+					glVertex3f(-99.8, 80-j*4.0, 44+i*4.0);
+					glVertex3f(-99.8, 76-j*4.0, 44+i*4.0);
+					glVertex3f(-99.8, 76-j*4.0, 40+i*4.0);
+					glEnd();
+				}
+		return;
+	}
+	void next_step()
+	{
+		int oprt[8][2] = {
+			{0,1},
+			{0,-1},
+			{1,0},
+			{-1,0},
+			{1,1},
+			{1,-1},
+			{-1,1},
+			{-1,-1}
+		};
+		bool tmp[30][40];
+		for(int i=0; i<30; ++i)
+			for (int j=0; j<40; ++j)
+			{
+				int cnt = 0;
+				for (int k = 0; k < 8; ++k)
+					cnt += get_map(i + oprt[k][0], j + oprt[k][1]);
+				if (cnt == 3)
+					tmp[i][j] = true;
+				else if (cnt == 2)
+					tmp[i][j] = map[i][j];
+				else
+					tmp[i][j] = false;
+			}
+		for (int i = 0; i < 30; ++i)
+			for (int j = 0; j < 40; ++j)
+				map[i][j] = tmp[i][j];
+		return;
+	}
+};
+game_of_life game;
 
 // window_size used in reshape
 struct window_size
@@ -45,6 +132,8 @@ window_size wd = { 800,600 };
 
 void init(void) // All Setup For OpenGL Goes Here
 {
+	
+
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_COLOR_MATERIAL); // output correct color
 	glEnable(GLUT_MULTISAMPLE);  // use multisampling
@@ -111,7 +200,7 @@ void generate_wall()
 	glEnd();
 	// ceiling
 	glBegin(GL_QUADS);
-		glColor3f(0.0, 1.0, 1.05);
+		glColor3f(0.0, 0.9, 0.95);
 		glVertex3f(100, 100, 200);
 		glVertex3f(100, 100, 0);
 		glVertex3f(-100, 100, 0);
@@ -149,9 +238,18 @@ void generate_wall()
 	return;
 }
 
-void generate_solar()
+void generate_solar_lamp()
 {
+	GLUquadric* pobj=gluNewQuadric();
+
 	// solar
+	glPushMatrix();
+	glTranslatef(0.0, 100.0, 100.0);
+	glColor3f(0.0, 0.0, 0.0);
+	glRotatef(90, 1.0, 0.0, 0.0);
+	gluCylinder(pobj, 0.5, 0.5, 20.0, 32, 5);
+	glPopMatrix();
+
 	glPushMatrix();
 	glTranslatef(0.0, 80.0, 100.0);
 	glColor3f(1.0, 1.0, 0.0);
@@ -161,18 +259,16 @@ void generate_solar()
 	// first planet
 	glPushMatrix();
 	glTranslatef(0.0, 80.0, 100.0);
-	glRotatef(4*angle, 0.0, 1.0, 0.0);
+	glRotatef(4*lamp_angle, 0.0, 1.0, 0.0);
 	glColor3f(0.0, 0.0, 0.0);
 	glTranslatef(-10.0, 0.0, 0.0);
 	glRotatef(90, 0.0, 1.0, 0.0);
-	GLUquadric* pobj=gluNewQuadric();
 	gluCylinder(pobj,0.2,0.2,10.0,32,5);
-	gluDeleteQuadric(pobj);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(0.0, 80.0, 100.0);
-	glRotatef(4*angle, 0.0, 1.0, 0.0);
+	glRotatef(4*lamp_angle, 0.0, 1.0, 0.0);
 	glColor3f(0.0, 0.6, 0.6);
 	glTranslatef(-10.0, 0.0, 0.0);
 	glutSolidSphere(2, 100, 100);
@@ -181,18 +277,16 @@ void generate_solar()
 	// second planet
 	glPushMatrix();
 	glTranslatef(0.0, 80.0, 100.0);
-	glRotatef(2 * angle, 0.0, 1.0, 0.0);
+	glRotatef(2*lamp_angle, 0.0, 1.0, 0.0);
 	glColor3f(0.5, 0.0, 0.0);
 	glTranslatef(25.0, 0.0, 0.0);
 	glRotatef(-90, 0.0, 1.0, 0.0);
-	pobj=gluNewQuadric();
 	gluCylinder(pobj, 0.2, 0.2, 25.0, 32, 5);
-	gluDeleteQuadric(pobj);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(0.0, 80.0, 100.0);
-	glRotatef(2*angle, 0.0, 1.0, 0.0);
+	glRotatef(2*lamp_angle, 0.0, 1.0, 0.0);
 	glColor3f(0.5, 0.0, 0.0);
 	glTranslatef(25.0, 0.0, 0.0);
 	glutSolidSphere(3, 100, 100);
@@ -201,18 +295,16 @@ void generate_solar()
 	// third planet
 	glPushMatrix();
 	glTranslatef(0.0, 80.0, 100.0);
-	glRotatef(2.5*angle, 0.0, 1.0, 0.0);
+	glRotatef(2.5*lamp_angle, 0.0, 1.0, 0.0);
 	glColor3f(0.5, 0.5, 0.5);
 	glTranslatef(20.0, 0.0, 0.0);
 	glRotatef(-90, 0.0, 1.0, 0.0);
-	pobj = gluNewQuadric();
 	gluCylinder(pobj, 0.2, 0.2, 20.0, 32, 5);
-	gluDeleteQuadric(pobj);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(0.0, 80.0, 100.0);
-	glRotatef(2.5*angle, 0.0, 1.0, 0.0);
+	glRotatef(2.5*lamp_angle, 0.0, 1.0, 0.0);
 	glColor3f(0.5, 0.5, 0.5);
 	glTranslatef(20.0, 0.0, 0.0);
 	glutSolidTeapot(2);
@@ -221,32 +313,134 @@ void generate_solar()
 	// forth planet
 	glPushMatrix();
 	glTranslatef(0.0, 80.0, 100.0);
-	glRotatef(angle / 2.0, 0.0, 1.0, 0.0);
+	glRotatef(lamp_angle/2.0, 0.0, 1.0, 0.0);
 	glColor3f(0.5, 0.0, 0.5);
 	glTranslatef(-30.0, 0.0, 0.0);
 	glRotatef(90, 0.0, 1.0, 0.0);
-	pobj = gluNewQuadric();
 	gluCylinder(pobj, 0.2, 0.2, 30.0, 32, 5);
-	gluDeleteQuadric(pobj);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(0.0, 80.0, 100.0);
-	glRotatef(angle/2.0, 0.0, 1.0, 0.0);
+	glRotatef(lamp_angle/2.0, 0.0, 1.0, 0.0);
 	glColor3f(0.5, 0.0, 0.5);
 	glTranslatef(-30.0, 0.0, 0.0);
 	glutSolidSphere(2, 100, 100);
 	glPopMatrix();
+
+	gluDeleteQuadric(pobj);
 	return;
 }
 
-void generate_cube()
+void generate_bed()
 {
 	glPushMatrix();
-	glTranslatef(55.0, -55.0, 155.0);
+	glTranslatef(60.0, -90.0, 130.0);
+	glScalef(8.0, 0.5, 14.0);
 	glColor3f(0.5, 0.5, 0.5);
-	glutSolidCube(90);
+	glutSolidCube(10);
 	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(22.5, -95.0, 62.5);
+	glScalef(1.0, 2.0, 1.0);
+	glColor3f(0.5, 0.5, 0.5);
+	glutSolidCube(5);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(22.5, -95.0, 197.5);
+	glScalef(1.0, 2.0, 1.0);
+	glColor3f(0.5, 0.5, 0.5);
+	glutSolidCube(5);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(97.5, -95.0, 197.5);
+	glScalef(1.0, 2.0, 1.0);
+	glColor3f(0.5, 0.5, 0.5);
+	glutSolidCube(5);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(97.5, -95.0, 62.5);
+	glScalef(1.0, 2.0, 1.0);
+	glColor3f(0.5, 0.5, 0.5);
+	glutSolidCube(5);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(60.0, -87.5, 130.0);
+	glScalef(8.0, 0.5, 14.0);
+	glColor3f(0.6, 0.3, 0.1);
+	glutSolidCube(10);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(60.0, -80, 180.0);
+	glScalef(5.0, 1.0, 1.5);
+	glColor3f(0.7, 0.7, 0.7);
+	glutSolidCube(10);
+	glPopMatrix();
+	return;
+}
+
+void generate_bookshelf()
+{
+	for (GLfloat y = -10; y < 80; y += 30)
+	{
+		glPushMatrix();
+		glTranslatef(85.0, y, 130.0);
+		glScalef(3.0, 0.5, 14.0);
+		glColor3f(0.3, 0.3, 0.2);
+		glutSolidCube(10);
+		glPopMatrix();
+	}
+
+	// put books
+	GLfloat book_height0[20] = {15,20,18.5,19,17,20,15,14,20,19,18,16,17,17,19,16,20,18,15,14};
+	for (int i = 0; i < 20; ++i)
+	{
+		glPushMatrix();
+		glTranslatef(90.0, 22+book_height0[i]/2.0, 62+i*2.0);
+		glScalef(2.0, book_height0[i]/10.0, 0.2);
+		glColor3f(0.0+book_height0[i]/25.0, 0.3+book_height0[i]/25.0, 0.2+book_height0[i]/25.0);
+		glutSolidCube(10);
+		glPopMatrix();
+	}
+	GLfloat book_height1[25] = { 16,21,19.5,18,18,19,14,15,20,19.4,18.2,16.5,17.6,15,17,15,15,19,20,18.4,13.2,14.0,15.6,16.5,17.1};
+	for (int i = 0; i < 25; ++i)
+	{
+		glPushMatrix();
+		glTranslatef(90.0, 52+book_height1[i]/2.0, 92+i*2.0);
+		glScalef(2.0, book_height1[i]/10.0, 0.2);
+		glColor3f(0.3+book_height1[i]/25.0, 0.2+book_height1[i]/25.0, book_height1[i]/25.0);
+		glutSolidCube(10);
+		glPopMatrix();
+	}
+
+	// put teapot
+	glPushMatrix();
+	glTranslatef(85.0, 0, 195.0-teapot_place);
+	glColor3f(0.6, 0.6, 0.2);
+	glutSolidTeapot(8);
+	glPopMatrix();
+	return;
+}
+
+void generate_drawing()
+{
+	glPushMatrix();
+	glBegin(GL_QUADS);
+	glColor3f(0.2, 0.2, 0.2);
+	glVertex3f(-99.9, -80, 40);
+	glVertex3f(-99.9, 80, 40);
+	glVertex3f(-99.9, 80, 160);
+	glVertex3f(-99.9, -80, 160);
+	glEnd();
+	glPopMatrix();
+
+	game.draw();
 	return;
 }
 
@@ -264,8 +458,10 @@ void display(void) // Here's Where We Do All The Drawing
 	// Draw walls and objects here
 	generate_wall();
 	generate_floor_board();
-	generate_solar();
-	generate_cube();
+	generate_solar_lamp();
+	generate_bed();
+	generate_bookshelf();
+	generate_drawing();
 
 	// TODO:
 	// Add animation here
@@ -323,7 +519,7 @@ void keyboard(unsigned char key, int x, int y) // Handle the keyboard events her
 		case 'r':
 			camera_place.x = 0.0;
 			camera_place.y = 0.0;
-			camera_place.z = 0.0;
+			camera_place.z = -30.0;
 			break;
 		case '-':
 			if(ambientlight[0]>0)
@@ -377,6 +573,15 @@ void keyboard(unsigned char key, int x, int y) // Handle the keyboard events her
 			glEnable(GL_LIGHT0);
 			glEnable(GL_LIGHTING);
 			break;
+		case 'm':
+			move_teapot = !move_teapot;
+			break;
+		case 'n':
+			game.next_step();
+			break;
+		case 'b':
+			game.reset();
+			break;
 		// TODO:
 		// Add keyboard control here
 
@@ -389,9 +594,20 @@ void keyboard(unsigned char key, int x, int y) // Handle the keyboard events her
 void idle()
 {
 	if (set_rotate_positive)
-		angle-=1;
+		lamp_angle-=1;
 	if (set_rotate_negative)
-		angle+=1;
+		lamp_angle+=1;
+	if (move_teapot)
+	{
+		if (inc_teapot_place)
+			teapot_place -= 1;
+		else
+			teapot_place += 1;
+		if (teapot_place >= 140)
+			inc_teapot_place = true;
+		if (teapot_place <= 0)
+			inc_teapot_place = false;
+	}
 	return;
 }
 

@@ -17,3 +17,9 @@ key '-': decrease the light.
 key '=': increase the light.
 
 key 'l': turn on/off the light.
+
+key 'm': move the teapot on the bookshelf.
+
+key 'n': get the next step of game-of-life(the drawing on the right wall).
+
+key 'b': reset the game of game-of-life.
