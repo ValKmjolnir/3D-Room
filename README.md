@@ -23,3 +23,7 @@ key 'm': move the teapot on the bookshelf.
 key 'n': get the next step of game-of-life(the drawing on the right wall).
 
 key 'b': reset the game of game-of-life.
+
+key 'c': change size of model on the desk.
+
+this room is bedroom.

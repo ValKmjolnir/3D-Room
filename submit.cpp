@@ -22,11 +22,13 @@ point camera_place = { 0.0,0.0,-30.0 }; // camera place
 point item_place = { 0.0,0.0,100.0 }; // item place that we look at
 point headtop_orient = { 0.0,1.0,0.0 };
 
+// set light
 GLfloat light_position[4] = { 0.0,99.0,100.0,1 };
 GLfloat ambientlight[4] = { 0.6,0.6,0.6,0.6 };
 GLfloat diffuselight[4] = { 0.6,0.6,0.6,0.6 };
 GLfloat specularlight[4] = { 0.6,0.6,0.6,0.6 };
 
+// set material
 GLfloat mat_ambient[4] = { 0.0,0.0,0.0,1.0 };
 GLfloat mat_diffuse[4] = { 0.6,0.6,0.6,0.6 };
 GLfloat mat_specular[4] = { 0.2,0.2,0.2,0.8 };
@@ -42,67 +44,63 @@ bool move_teapot = false;
 bool inc_teapot_place = true;
 GLfloat teapot_place = 0;
 
+// set model size on the desk
+bool change_size = false;
+bool change_larger = false;
+bool change_smaller = false;
+GLfloat model_scale = 1.0;
+
 // generate the drawing on the wall
-bool map[30][40];
 class game_of_life
 {
 private:
-	bool map[30][40];
+	bool map[60][80];
 	bool get_map(int x, int y)
 	{
-		if (x < 0) x = 29;
-		if (x > 29)x = 0;
-		if (y < 0)y = 39;
-		if (y > 39)y = 0;
+		if (x < 0) x = 59;
+		if (x > 59)x = 0;
+		if (y < 0)y = 79;
+		if (y > 79)y = 0;
 		return map[x][y];
 	}
 public:
 	game_of_life()
 	{
 		srand(unsigned(time(NULL)));
-		for(int i=0; i<30; ++i)
-			for(int j=0; j<40; ++j)
+		for(int i=0; i<60; ++i)
+			for(int j=0; j<80; ++j)
 				map[i][j] = (rand()%100)<30;
 		return;
 	}
 	void reset()
 	{
-		for (int i = 0; i < 30; ++i)
-			for (int j = 0; j < 40; ++j)
-				map[i][j] = (rand() % 100) < 30;
+		for (int i = 0; i < 60; ++i)
+			for (int j = 0; j < 80; ++j)
+				map[i][j] = (rand()%100)<30;
 		return;
 	}
 	void draw()
 	{
-		for(int i=0; i<30; ++i)
-			for(int j=0; j<40; ++j)
+		for(int i=0; i<60; ++i)
+			for(int j=0; j<80; ++j)
 				if (map[i][j])
 				{
 					glBegin(GL_QUADS);
 					glColor3f(0.0, 0.5, 0.4);
-					glVertex3f(-99.8, 80-j*4.0, 40+i*4.0);
-					glVertex3f(-99.8, 80-j*4.0, 44+i*4.0);
-					glVertex3f(-99.8, 76-j*4.0, 44+i*4.0);
-					glVertex3f(-99.8, 76-j*4.0, 40+i*4.0);
+					glVertex3f(-99.8, 80-j*2.0, 40+i*2.0);
+					glVertex3f(-99.8, 80-j*2.0, 42+i*2.0);
+					glVertex3f(-99.8, 78-j*2.0, 42+i*2.0);
+					glVertex3f(-99.8, 78-j*2.0, 40+i*2.0);
 					glEnd();
 				}
 		return;
 	}
 	void next_step()
 	{
-		int oprt[8][2] = {
-			{0,1},
-			{0,-1},
-			{1,0},
-			{-1,0},
-			{1,1},
-			{1,-1},
-			{-1,1},
-			{-1,-1}
-		};
-		bool tmp[30][40];
-		for(int i=0; i<30; ++i)
-			for (int j=0; j<40; ++j)
+		int oprt[8][2] = {{0,1},{0,-1},{1,0},{-1,0},{1,1},{1,-1},{-1,1},{-1,-1}};
+		bool tmp[60][80];
+		for(int i=0; i<60; ++i)
+			for (int j=0; j<80; ++j)
 			{
 				int cnt = 0;
 				for (int k = 0; k < 8; ++k)
@@ -114,8 +112,8 @@ public:
 				else
 					tmp[i][j] = false;
 			}
-		for (int i = 0; i < 30; ++i)
-			for (int j = 0; j < 40; ++j)
+		for (int i=0; i<60; ++i)
+			for (int j=0; j<80; ++j)
 				map[i][j] = tmp[i][j];
 		return;
 	}
@@ -132,8 +130,6 @@ window_size wd = { 800,600 };
 
 void init(void) // All Setup For OpenGL Goes Here
 {
-	
-
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_COLOR_MATERIAL); // output correct color
 	glEnable(GLUT_MULTISAMPLE);  // use multisampling
@@ -247,7 +243,7 @@ void generate_solar_lamp()
 	glTranslatef(0.0, 100.0, 100.0);
 	glColor3f(0.0, 0.0, 0.0);
 	glRotatef(90, 1.0, 0.0, 0.0);
-	gluCylinder(pobj, 0.5, 0.5, 20.0, 32, 5);
+	gluCylinder(pobj, 1.0, 0.2, 20.0, 50, 50);
 	glPopMatrix();
 
 	glPushMatrix();
@@ -397,6 +393,26 @@ void generate_bookshelf()
 		glPopMatrix();
 	}
 
+	for (GLfloat y = -10; y < 50; y += 30)
+	{
+		glPushMatrix();
+		glTranslatef(30.0, y, 185.0);
+		glScalef(14.0, 0.5, 3.0);
+		glColor3f(0.3, 0.3, 0.2);
+		glutSolidCube(10);
+		glPopMatrix();
+	}
+	// put cone
+	for (GLfloat x = -20.0; x <= 80; x += 20)
+	{
+		glPushMatrix();
+		glTranslatef(x, 20.0, 185.0);
+		glRotatef(-90, 1.0, 0.0, 0.0);
+		glColor3f(0.0, 0.3+(x/100.0), 0.3);
+		glutSolidCone(10, 20, 50, 50);
+		glPopMatrix();
+	}
+
 	// put books
 	GLfloat book_height0[20] = {15,20,18.5,19,17,20,15,14,20,19,18,16,17,17,19,16,20,18,15,14};
 	for (int i = 0; i < 20; ++i)
@@ -444,6 +460,44 @@ void generate_drawing()
 	return;
 }
 
+void generate_desk()
+{
+	GLUquadric* pobj = gluNewQuadric();
+
+	glPushMatrix();
+	glTranslatef(-25.0, -100.0, 150.0);
+	glRotatef(-90, 1.0, 0.0, 0.0);
+	glColor3f(0.2, 0.5, 0.4);
+	gluCylinder(pobj, 20.0, 5.0, 5, 50, 50);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(-25.0, -95.0, 150.0);
+	glRotatef(-90, 1.0, 0.0, 0.0);
+	glColor3f(0.1, 0.4, 0.4);
+	gluCylinder(pobj, 5.0, 5.0, 40, 50, 50);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(-25.0, -55.0, 150.0);
+	glColor3f(0.4, 0.4, 0.4);
+	glScalef(30, 1, 30);
+	glutSolidCube(2);
+	glPopMatrix();
+
+	// model
+	glPushMatrix();
+	glTranslatef(-35.0, -53.0, 155.0);
+	glRotatef(-90, 1.0, 0.0, 0.0);
+	glColor3f(0.0, 0.4, 0.4);
+	glScalef(model_scale,model_scale,model_scale);
+	glutSolidCone(10,10,50,50);
+	glPopMatrix();
+
+	gluDeleteQuadric(pobj);
+	return;
+}
+
 void display(void) // Here's Where We Do All The Drawing
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -462,9 +516,7 @@ void display(void) // Here's Where We Do All The Drawing
 	generate_bed();
 	generate_bookshelf();
 	generate_drawing();
-
-	// TODO:
-	// Add animation here
+	generate_desk();
 
 	glutSwapBuffers();
 	glFlush();
@@ -582,9 +634,9 @@ void keyboard(unsigned char key, int x, int y) // Handle the keyboard events her
 		case 'b':
 			game.reset();
 			break;
-		// TODO:
-		// Add keyboard control here
-
+		case 'c':
+			change_size = !change_size;
+			break;
 	}
 	reshape(wd.w, wd.h);// change camera place by x and y
 	glutPostRedisplay();// redisplay things after moving camera
@@ -607,6 +659,23 @@ void idle()
 			inc_teapot_place = true;
 		if (teapot_place <= 0)
 			inc_teapot_place = false;
+	}
+	if (change_size)
+	{
+		if (model_scale <= 1.0)
+		{
+			change_smaller = false;
+			change_larger = true;
+		}
+		if (model_scale >= 2.0)
+		{
+			change_smaller = true;
+			change_larger = false;
+		}
+		if (change_smaller)
+			model_scale -= 0.025;
+		if (change_larger)
+			model_scale += 0.025;
 	}
 	return;
 }
