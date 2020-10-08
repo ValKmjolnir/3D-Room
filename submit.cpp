@@ -689,10 +689,10 @@ int main(int argc, char** argv)
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 
 	/*Create a window with title specified */
-	glutCreateWindow("Assignment 1");
 	glutInitWindowSize(800, 600);
 	glutInitWindowPosition(100, 100);
-
+	glutCreateWindow("Assignment 1");
+	
 	init();	/*not GLUT call, initialize several parameters */
 
 	/*Register different CALLBACK function for GLUT to response
