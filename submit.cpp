@@ -4,13 +4,14 @@
 *****************************************************************************/
 /*****************************************************************************
 		Student Information
-		Student ID:nan
-		Student Name:ValKmjolnir
+		Student ID:161810120
+		Student Name:Li Haokun
 *****************************************************************************/
 
 #include <stdlib.h>
 #include <ctime>
 #include <GL/glut.h>
+#include <math.h>
 
 struct point
 {
@@ -18,7 +19,7 @@ struct point
 	GLdouble y;
 	GLdouble z;
 };
-point camera_place = { 0.0,0.0,-30.0 }; // camera place
+point camera_place = { 0.0,0.0,10.0 }; // camera place
 point item_place = { 0.0,0.0,100.0 }; // item place that we look at
 point headtop_orient = { 0.0,1.0,0.0 };
 
@@ -49,6 +50,10 @@ bool change_size = false;
 bool change_larger = false;
 bool change_smaller = false;
 GLfloat model_scale = 1.0;
+
+// close window
+bool close_window = false;
+GLfloat window_length = 90;
 
 // generate the drawing on the wall
 class game_of_life
@@ -86,7 +91,7 @@ public:
 				if (map[i][j])
 				{
 					glBegin(GL_QUADS);
-					glColor3f(0.0, 0.5, 0.4);
+					glColor3f(0.0, 5, 4);
 					glVertex3f(-99.8, 80-j*2.0, 40+i*2.0);
 					glVertex3f(-99.8, 80-j*2.0, 42+i*2.0);
 					glVertex3f(-99.8, 78-j*2.0, 42+i*2.0);
@@ -337,45 +342,56 @@ void generate_bed()
 	glutSolidCube(10);
 	glPopMatrix();
 
+	GLUquadric* pobj = gluNewQuadric();
+
 	glPushMatrix();
-	glTranslatef(22.5, -95.0, 62.5);
-	glScalef(1.0, 2.0, 1.0);
+	glTranslatef(22.5, -92.5, 62.5);
 	glColor3f(0.5, 0.5, 0.5);
-	glutSolidCube(5);
+	glRotatef(90, 1, 0, 0);
+	gluCylinder(pobj, 2.5, 2.5, 9, 10, 10);
 	glPopMatrix();
 
 	glPushMatrix();
-	glTranslatef(22.5, -95.0, 197.5);
-	glScalef(1.0, 2.0, 1.0);
+	glTranslatef(22.5, -92.5, 197.5);
 	glColor3f(0.5, 0.5, 0.5);
-	glutSolidCube(5);
+	glRotatef(90, 1, 0, 0);
+	gluCylinder(pobj, 2.5, 2.5, 9, 10, 10);
 	glPopMatrix();
 
 	glPushMatrix();
-	glTranslatef(97.5, -95.0, 197.5);
-	glScalef(1.0, 2.0, 1.0);
+	glTranslatef(97.5, -92.5, 197.5);
 	glColor3f(0.5, 0.5, 0.5);
-	glutSolidCube(5);
+	glRotatef(90, 1, 0, 0);
+	gluCylinder(pobj, 2.5, 2.5, 9, 10, 10);
 	glPopMatrix();
 
 	glPushMatrix();
-	glTranslatef(97.5, -95.0, 62.5);
-	glScalef(1.0, 2.0, 1.0);
+	glTranslatef(97.5, -92.5, 62.5);
 	glColor3f(0.5, 0.5, 0.5);
-	glutSolidCube(5);
+	glRotatef(90, 1, 0, 0);
+	gluCylinder(pobj, 2.5, 2.5, 9, 10, 10);
 	glPopMatrix();
+
+	gluDeleteQuadric(pobj);
 
 	glPushMatrix();
 	glTranslatef(60.0, -87.5, 130.0);
-	glScalef(8.0, 0.5, 14.0);
+	glScalef(7.9, 0.5, 13.9);
 	glColor3f(0.6, 0.3, 0.1);
+	glutSolidCube(10);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(60.0, -82.5, 110.0);
+	glScalef(7.5, 0.5, 10);
+	glColor3f(0.2, 0.3, 0.1);
 	glutSolidCube(10);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(60.0, -80, 180.0);
 	glScalef(5.0, 1.0, 1.5);
-	glColor3f(0.7, 0.7, 0.7);
+	glColor3f(0.7, 0.7, 0.2);
 	glutSolidCube(10);
 	glPopMatrix();
 	return;
@@ -388,7 +404,7 @@ void generate_bookshelf()
 		glPushMatrix();
 		glTranslatef(85.0, y, 130.0);
 		glScalef(3.0, 0.5, 14.0);
-		glColor3f(0.3, 0.3, 0.2);
+		glColor3f(0.7, 0.7, 0.6);
 		glutSolidCube(10);
 		glPopMatrix();
 	}
@@ -398,7 +414,7 @@ void generate_bookshelf()
 		glPushMatrix();
 		glTranslatef(30.0, y, 185.0);
 		glScalef(14.0, 0.5, 3.0);
-		glColor3f(0.3, 0.3, 0.2);
+		glColor3f(0.7, 0.7, 0.6);
 		glutSolidCube(10);
 		glPopMatrix();
 	}
@@ -448,11 +464,11 @@ void generate_drawing()
 {
 	glPushMatrix();
 	glBegin(GL_QUADS);
-	glColor3f(0.2, 0.2, 0.2);
-	glVertex3f(-99.9, -80, 40);
-	glVertex3f(-99.9, 80, 40);
-	glVertex3f(-99.9, 80, 160);
-	glVertex3f(-99.9, -80, 160);
+		glColor3f(0.2, 0.2, 0.2);
+		glVertex3f(-99.9, -80, 40);
+		glVertex3f(-99.9, 80, 40);
+		glVertex3f(-99.9, 80, 160);
+		glVertex3f(-99.9, -80, 160);
 	glEnd();
 	glPopMatrix();
 
@@ -467,20 +483,20 @@ void generate_desk()
 	glPushMatrix();
 	glTranslatef(-25.0, -100.0, 150.0);
 	glRotatef(-90, 1.0, 0.0, 0.0);
-	glColor3f(0.2, 0.5, 0.4);
+	glColor3f(0.7, 0.6, 0.6);
 	gluCylinder(pobj, 20.0, 5.0, 5, 50, 50);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(-25.0, -95.0, 150.0);
 	glRotatef(-90, 1.0, 0.0, 0.0);
-	glColor3f(0.1, 0.4, 0.4);
+	glColor3f(0.7, 0.6, 0.5);
 	gluCylinder(pobj, 5.0, 5.0, 40, 50, 50);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(-25.0, -55.0, 150.0);
-	glColor3f(0.4, 0.4, 0.4);
+	glColor3f(0.8, 0.8, 0.8);
 	glScalef(30, 1, 30);
 	glutSolidCube(2);
 	glPopMatrix();
@@ -498,6 +514,70 @@ void generate_desk()
 	return;
 }
 
+void draw_star(GLfloat centerx,GLfloat centerz,GLfloat size)
+{
+//	0A:{0, a}
+//	1B:(a*cos(18 * Pi / 180),a*sin(18 * pi / 180))
+//	2C:(a*cos(54 * Pi / 180),-a * sin(54 * pi / 180))
+//	3D:(-a*cos(54 * Pi / 180),-a * sin(54 * pi / 180))
+//	4E:(-a*cos(18 * Pi / 180),a*sin(18 * pi / 180))
+//  A->C->E->B->D->A
+	GLfloat x[5] = {0,   size*cos(18*3.1415/180),size*cos(54*3.1415/180),-size*cos(54*3.1415/180),-size*cos(18*3.1415/180)};
+	GLfloat z[5] = {size,size*sin(18*3.1415/180),-size*sin(54*3.1415/180),-size*sin(54*3.1415/180),size*sin(18*3.1415/180)};
+	GLfloat y = 99.9;
+
+	glBegin(GL_LINE_LOOP);
+		glColor3f(5, 5, 0.1);
+		glVertex3f(x[0] + centerx, y, z[0] + centerz);
+		glVertex3f(x[2] + centerx, y, z[2] + centerz);
+		glVertex3f(x[4] + centerx, y, z[4] + centerz);
+		glVertex3f(x[1] + centerx, y, z[1] + centerz);
+		glVertex3f(x[3] + centerx, y, z[3] + centerz);
+		glVertex3f(x[0] + centerx, y, z[0] + centerz);
+	glEnd();
+	return;
+}
+
+void generate_stars()
+{
+	srand(unsigned(time(NULL)));
+	for (int i = 0; i < 100; ++i)
+	{
+		GLfloat centerx = (rand() % 2 ? 1.0 : -1.0)*(rand() % 100);
+		GLfloat centerz = (rand() % 200);
+		draw_star(centerx, centerz, rand() % 5);
+	}
+	return;
+}
+
+void generate_window()
+{
+	glBegin(GL_QUADS);
+	glColor3f(4, 4, 4);
+		glVertex3f(-50, 40, 199.9);
+		glVertex3f(-50, 0, 199.9);
+		glVertex3f(-90, 0, 199.9);
+		glVertex3f(-90, 40, 199.9);
+	glEnd();
+
+	glBegin(GL_QUADS);
+		glColor3f(4, 4, 4);
+		glVertex3f(-50, -5, 199.9);
+		glVertex3f(-50, -45, 199.9);
+		glVertex3f(-90, -45, 199.9);
+		glVertex3f(-90, -5, 199.9);
+	glEnd();
+
+	glBegin(GL_QUADS);
+		glColor3f(0.1, 0.5, 0.8);
+		glVertex3f(-49, 50, 199.8);
+		glVertex3f(-49, 40-window_length, 199.8);
+		glVertex3f(-91, 40-window_length, 199.8);
+		glVertex3f(-91, 50, 199.8);
+	glEnd();
+	return;
+}
+
 void display(void) // Here's Where We Do All The Drawing
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -511,12 +591,14 @@ void display(void) // Here's Where We Do All The Drawing
 	// TODO:
 	// Draw walls and objects here
 	generate_wall();
+	generate_window();
 	generate_floor_board();
 	generate_solar_lamp();
 	generate_bed();
 	generate_bookshelf();
 	generate_drawing();
 	generate_desk();
+	generate_stars();
 
 	glutSwapBuffers();
 	glFlush();
@@ -557,21 +639,21 @@ void keyboard(unsigned char key, int x, int y) // Handle the keyboard events her
 			exit(0);
 			break;
 		case 'w':
-			camera_place.z += 1;
+			camera_place.z += 2;
 			break;
 		case 's':
-			camera_place.z -= 1;
+			camera_place.z -= 2;
 			break;
 		case 'a':
-			camera_place.x += 1;
+			camera_place.x += 2;
 			break;
 		case 'd':
-			camera_place.x -= 1;
+			camera_place.x -= 2;
 			break;
 		case 'r':
 			camera_place.x = 0.0;
 			camera_place.y = 0.0;
-			camera_place.z = -30.0;
+			camera_place.z = 10.0;
 			break;
 		case '-':
 			if(ambientlight[0]>0)
@@ -631,6 +713,9 @@ void keyboard(unsigned char key, int x, int y) // Handle the keyboard events her
 		case 'n':
 			game.next_step();
 			break;
+		case 'p':
+			close_window = !close_window;
+			break;
 		case 'b':
 			game.reset();
 			break;
@@ -677,6 +762,16 @@ void idle()
 		if (change_larger)
 			model_scale += 0.025;
 	}
+	if (close_window)
+	{
+		if (window_length < 90)
+			window_length += 1;
+	}
+	else
+	{
+		if (window_length > 0)
+			window_length -= 1;
+	}
 	return;
 }
 
@@ -692,7 +787,7 @@ int main(int argc, char** argv)
 	glutInitWindowSize(800, 600);
 	glutInitWindowPosition(100, 100);
 	glutCreateWindow("Assignment 1");
-	
+
 	init();	/*not GLUT call, initialize several parameters */
 
 	/*Register different CALLBACK function for GLUT to response
