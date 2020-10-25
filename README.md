@@ -1,8 +1,5 @@
 # 3D Room @ NUAA CCST Computer Graphics
 
-student ID: 161810120
-student Name: Li Haokun
-
 key 'esc': exit this programme.
 
 key 'w' 'a' 's' 'd': change camera's place by changing x('a' 'd')/y('w' 's').
